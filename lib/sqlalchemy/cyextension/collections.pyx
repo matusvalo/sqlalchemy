@@ -147,16 +147,13 @@ cdef class OrderedSet(set):
         self.intersection_update(other)
         return self
 
-    cdef int _symmetric_difference_update(self, other) except -1:
+    cpdef symmetric_difference_update(self, other):
         set.symmetric_difference_update(self, other)
         self._list = [a for a in self._list if a in self]
         self._list += [a for a in other if a in self]
 
-    def symmetric_difference_update(self, other):
-        return self._symmetric_difference_update(other)
-
     def __ixor__(self, other):
-        self._symmetric_difference_update(other)
+        self.symmetric_difference_update(other)
         return self
 
     def difference_update(self, *other):
@@ -196,15 +193,12 @@ cdef class IdentitySet:
     def __contains__(self, value):
         return cy_id(value) in self._members
 
-    def remove(self, value):
-        return self._remove(value)
-
-    cdef int _remove(self, value) except -1:
+    cpdef remove(self, value):
         del self._members[cy_id(value)]
 
     def discard(self, value):
         try:
-            self._remove(value)
+            self.remove(value)
         except KeyError:
             pass
 
@@ -284,7 +278,7 @@ cdef class IdentitySet:
     cpdef IdentitySet union(self, iterable):
         cdef IdentitySet result = self.__class__()
         result._members.update(self._members)
-        result._update(iterable)
+        result.update(iterable)
         return result
 
     def __or__(self, other):
@@ -292,18 +286,14 @@ cdef class IdentitySet:
             return NotImplemented
         return self.union(other)
 
-    def update(self, iterable):
-        return self._update(iterable)
-
-
-    cdef int _update(self, iterable) except -1:
+    cpdef update(self, iterable):
         for obj in iterable:
             self._members[cy_id(obj)] = obj
 
     def __ior__(self, other):
         if not isinstance(other, IdentitySet):
             return NotImplemented
-        self._update(other)
+        self.update(other)
         return self
 
     cpdef IdentitySet difference(self, iterable):
@@ -320,17 +310,14 @@ cdef class IdentitySet:
             return NotImplemented
         return self.difference(other)
 
-    def difference_update(self, iterable):
-        return self._difference_update(iterable)
-
-    cdef int _difference_update(self, iterable) except -1:
+    cpdef difference_update(self, iterable):
         cdef IdentitySet other = self.difference(iterable)
         self._members = other._members
 
     def __isub__(self, other):
         if not isinstance(other, IdentitySet):
             return NotImplemented
-        self._difference_update(other)
+        self.difference_update(other)
         return self
 
     cpdef IdentitySet intersection(self, iterable):
@@ -347,17 +334,14 @@ cdef class IdentitySet:
             return NotImplemented
         return self.intersection(other)
 
-    def intersection_update(self, iterable):
-        return self._intersection_update(iterable)
-
-    cdef int _intersection_update(self, iterable) except -1:
+    cpdef intersection_update(self, iterable):
         cdef IdentitySet other = self.intersection(iterable)
         self._members = other._members
 
     def __iand__(self, other):
         if not isinstance(other, IdentitySet):
             return NotImplemented
-        self._intersection_update(other)
+        self.intersection_update(other)
         return self
 
     cpdef IdentitySet symmetric_difference(self, iterable):
@@ -378,10 +362,7 @@ cdef class IdentitySet:
             return NotImplemented
         return self.symmetric_difference(other)
 
-    def symmetric_difference_update(self, iterable):
-        return self._symmetric_difference_update(iterable)
-
-    cdef int _symmetric_difference_update(self, iterable) except -1:
+    cpdef symmetric_difference_update(self, iterable):
         cdef IdentitySet other = self.symmetric_difference(iterable)
         self._members = other._members
 
