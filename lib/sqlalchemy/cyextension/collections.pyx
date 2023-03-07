@@ -122,7 +122,7 @@ cdef class OrderedSet(set):
     def __and__(self, other):
         return self.intersection(other)
 
-    def symmetric_difference(self, other):
+    cpdef symmetric_difference(self, other):
         cdef set other_set = self._to_set(other)
         result = self._from_list([a for a in self._list if a not in other_set])
         # use other here to keep the order
