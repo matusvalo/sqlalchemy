@@ -1,6 +1,6 @@
 from cpython.dict cimport PyDict_Merge, PyDict_Update
 from cpython.long cimport PyLong_FromLong
-from cpython.set cimport PySet_Add
+from cpython.set cimport PySet_Add, PySet_Contains, PySet_Discard
 
 from itertools import filterfalse
 
@@ -51,7 +51,7 @@ cdef class OrderedSet(set):
         return new
 
     def add(self, element):
-        if element not in self:
+        if not PySet_Contains(self, element):
             self._list.append(element)
             PySet_Add(self, element)
 
@@ -61,13 +61,12 @@ cdef class OrderedSet(set):
         self._list.remove(element)
 
     def insert(self, Py_ssize_t pos, element):
-        if element not in self:
+        if not PySet_Contains(self, element):
             self._list.insert(pos, element)
             PySet_Add(self, element)
 
     def discard(self, element):
-        if element in self:
-            set.remove(self, element)
+        if PySet_Discard(self, element):
             self._list.remove(element)
 
     def clear(self):
@@ -90,7 +89,7 @@ cdef class OrderedSet(set):
 
     cpdef OrderedSet update(self, iterable):
         for e in iterable:
-            if e not in self:
+            if not PySet_Contains(self, e):
                 self._list.append(e)
                 set.add(self, e)
         return self
@@ -126,7 +125,7 @@ cdef class OrderedSet(set):
         cdef set other_set = self._to_set(other)
         result = self._from_list([a for a in self._list if a not in other_set])
         # use other here to keep the order
-        result.update(a for a in other if a not in self)
+        result.update(a for a in other if not PySet_Contains(self, a))
         return result
 
     def __xor__(self, other):
@@ -141,7 +140,7 @@ cdef class OrderedSet(set):
 
     def intersection_update(self, *other):
         set.intersection_update(self, *other)
-        self._list = [a for a in self._list if a in self]
+        self._list = [a for a in self._list if PySet_Contains(self, a)]
 
     def __iand__(self, other):
         self.intersection_update(other)
@@ -149,8 +148,8 @@ cdef class OrderedSet(set):
 
     cpdef symmetric_difference_update(self, other):
         set.symmetric_difference_update(self, other)
-        self._list = [a for a in self._list if a in self]
-        self._list += [a for a in other if a in self]
+        self._list = [a for a in self._list if PySet_Contains(self, a)]
+        self._list += [a for a in other if PySet_Contains(self, a)]
 
     def __ixor__(self, other):
         self.symmetric_difference_update(other)
@@ -158,7 +157,7 @@ cdef class OrderedSet(set):
 
     def difference_update(self, *other):
         set.difference_update(self, *other)
-        self._list = [a for a in self._list if a in self]
+        self._list = [a for a in self._list if PySet_Contains(self, a)]
 
     def __isub__(self, other):
         self.difference_update(other)
