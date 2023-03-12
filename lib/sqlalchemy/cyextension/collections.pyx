@@ -1,3 +1,4 @@
+cimport cython
 from cpython.dict cimport PyDict_Merge, PyDict_Update
 from cpython.long cimport PyLong_FromLong
 from cpython.set cimport PySet_Add, PySet_Contains, PySet_Discard
@@ -38,12 +39,14 @@ cdef class OrderedSet(set):
         else:
             self._list = []
 
+    @cython.final
     cdef OrderedSet _copy(self):
         cdef OrderedSet cp = OrderedSet.__new__(OrderedSet)
         cp._list = list(self._list)
         set.update(cp, cp._list)
         return cp
 
+    @cython.final
     cdef OrderedSet _from_list(self, list new_list):
         cdef OrderedSet new = OrderedSet.__new__(OrderedSet)
         new._list = new_list
@@ -106,6 +109,7 @@ cdef class OrderedSet(set):
     def __or__(self, other):
         return self.union(other)
 
+    @cython.final
     cdef set _to_set(self, other):
         cdef set other_set
         if isinstance(other, set):
